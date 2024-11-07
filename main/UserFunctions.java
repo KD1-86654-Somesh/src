@@ -8,8 +8,11 @@ import daos.UserDao;
 import daos.UserDaoImpl;
 import daos.movieDao;
 import daos.movieDaoImpl;
+import daos.reviewsDao;
+import daos.reviewsDaoImpl;
 import entities.User;
 import entities.movies;
+import entities.reviews;
 
 
 
@@ -123,6 +126,97 @@ public class UserFunctions {
 		}
      
      
+     static void addReview() {
+		 System.out.print("Enter MovieId: ");
+			int movie_id = scanner.nextInt();
+			System.out.print("Enter review  : ");
+			String review_text = scanner.next();
+			System.out.print("Enter rating: ");
+			int rating = scanner.nextInt();
+			
+        try (reviewsDao review = new reviewsDaoImpl()) {  
+        	reviews r = new reviews(0, movie_id, review_text, rating, Main.currentUser.getId());
+            boolean result = review.addReview(r);
+            if (result) {
+                System.out.println("User registered successfully.");
+            } else {
+                System.out.println("Registration failed. Email may already exist.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error during registration: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
      
 
+
+     
+     static boolean editReview() {
+         try(reviewsDao reviewDao = new reviewsDaoImpl()) {
+        	 System.out.print("Enter review Id to edit: ");
+             int id = scanner.nextInt();
+ 			reviews r = reviewDao.findReview(id);
+ 			if(r != null) {
+ 				System.out.println("Found " + r); 	
+ 			    System.out.println("Enter new review text");
+ 			    String review_text = scanner.next();
+ 			    System.out.println("Enter new review rating");
+			    int rating = scanner.nextInt();
+			    reviews r2 = new reviews(r.getId(),r.getMovieId(),review_text,rating,r.getUserId());
+	            boolean result = reviewDao.editReview(r2);
+	            if (result) {
+	                System.out.println("Review Updated successfully.");
+	            } else {
+	                System.out.println("Review Update failed.");
+	            }
+ 			}
+ 			else
+ 				System.out.println("Review Not Found.");
+ 		} // candDao.close();
+ 		catch (Exception e) {
+ 			e.printStackTrace();
+ 		}
+         return false;
+     }
+     
+     static void deleteReview() {
+    	 try(reviewsDao reviewDao = new reviewsDaoImpl()) {
+ 			System.out.print("Enter review Id (to delete): ");
+ 			int id = scanner.nextInt();
+ 			boolean result = reviewDao.deleteReview(id);
+ 			if (result) {
+                System.out.println("Deleted Successfully.");
+            } else {
+                System.out.println("Deletion failed.");
+            }
+ 		} // candDao.close();
+ 		catch (Exception e) {
+ 			e.printStackTrace();
+ 		}
+     }
+     
+     static void displayAllReviews() {
+			try(reviewsDao reviewDao = new reviewsDaoImpl()) {
+				List<reviews> list = reviewDao.displayAll();
+				list.forEach(System.out::println);
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}		
+		}
+     
+     static void displayMyReviews() {
+		    if (Main.currentUser  == null) {
+		        System.out.println("You need to log in to view your reviews.");
+		        return;
+		    }
+
+		    try (reviewsDao reviewDao = new reviewsDaoImpl()) {
+		        List<reviews> reviewList = reviewDao.displayMyReviews(Main.currentUser.getId()); // Assuming getId() returns user_id
+				reviewList.forEach(System.out::println);
+		    } catch (Exception e) {
+		        System.out.println("Error while retrieving orders: " + e.getMessage());
+		        e.printStackTrace();
+		    }
+		}
 }

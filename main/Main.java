@@ -45,7 +45,12 @@ public class Main {
             System.out.println("1. Edit Profile");
             System.out.println("2. Change Password");
             System.out.println("3. Display All Movies");
-            System.out.println("4. View  Orders");
+            System.out.println("4. Add Review");
+            System.out.println("5. Edit Review");
+            System.out.println("6. Delete Review");
+            System.out.println("7. Display All Reviews");
+            System.out.println("8. Display My Reviews");
+
             System.out.println("0. Exit");
 
             System.out.print("Choice: ");
@@ -63,7 +68,19 @@ public class Main {
                     users.viewMovies();
                     break;
                 case 4: 
-                    //
+                    users.addReview();
+                    break;
+                case 5: 
+                    users.editReview();
+                    break;
+                case 6: 
+                    users.deleteReview();
+                    break;
+                case 7: 
+                    users.displayAllReviews();;
+                    break;
+                case 8: 
+                    users.displayMyReviews();;
                     break;
                 case 0:
                     System.out.println("Exiting...");
