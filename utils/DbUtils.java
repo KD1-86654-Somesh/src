@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 
 public class DbUtils {
 	public static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
-	public static final String DB_URL = "jdbc:mysql://localhost:3306/ecommerce_db";
+	public static final String DB_URL = "jdbc:mysql://localhost:3306/hackathon";
 	public static final String DB_USER = "KD1_86654_Somesh";
 	public static final String DB_PASSWORD = "manager";
 	

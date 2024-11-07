@@ -42,9 +42,9 @@ public class Main {
     public static void userMenu() {
     	while(true) {
             System.out.println("Select an option:");
-            System.out.println("1. Add Products");
-            System.out.println("2. View Products");
-            System.out.println("3. Place Order");
+            System.out.println("1. Edit Profile");
+            System.out.println("2. Change Password");
+            System.out.println("3. Display All Movies");
             System.out.println("4. View  Orders");
             System.out.println("0. Exit");
 
@@ -54,13 +54,13 @@ public class Main {
 
             switch (choice) {
                 case 1: 
-                	//
+                	users.editProfile();
                     break;
                 case 2: 
-                    //
+                    users.changePassword();
                 	break;
                 case 3: 
-                    //
+                    users.viewMovies();
                     break;
                 case 4: 
                     //
