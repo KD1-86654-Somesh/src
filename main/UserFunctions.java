@@ -1,6 +1,10 @@
 package main;
 
 import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -91,7 +95,7 @@ public class UserFunctions {
                 System.out.println("Update failed.");
             }
         } catch (Exception e) {
-            System.out.println("Error during registration: " + e.getMessage());
+            System.out.println("Error during Updation: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -135,15 +139,17 @@ public class UserFunctions {
 			int rating = scanner.nextInt();
 			
         try (reviewsDao review = new reviewsDaoImpl()) {  
-        	reviews r = new reviews(0, movie_id, review_text, rating, Main.currentUser.getId());
+			Timestamp ts = Timestamp.from(Instant.now());
+
+        	reviews r = new reviews(0, movie_id, review_text, rating, Main.currentUser.getId(),ts);
             boolean result = review.addReview(r);
             if (result) {
-                System.out.println("User registered successfully.");
+                System.out.println("Review Added successfully.");
             } else {
-                System.out.println("Registration failed. Email may already exist.");
+                System.out.println("Review Addition Failed. ");
             }
         } catch (Exception e) {
-            System.out.println("Error during registration: " + e.getMessage());
+            System.out.println("Error during review: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -162,7 +168,9 @@ public class UserFunctions {
  			    String review_text = scanner.next();
  			    System.out.println("Enter new review rating");
 			    int rating = scanner.nextInt();
-			    reviews r2 = new reviews(r.getId(),r.getMovieId(),review_text,rating,r.getUserId());
+				Timestamp ts = Timestamp.from(Instant.now());
+
+			    reviews r2 = new reviews(r.getId(),r.getMovieId(),review_text,rating,r.getUserId(),ts);
 	            boolean result = reviewDao.editReview(r2);
 	            if (result) {
 	                System.out.println("Review Updated successfully.");
@@ -212,11 +220,46 @@ public class UserFunctions {
 		    }
 
 		    try (reviewsDao reviewDao = new reviewsDaoImpl()) {
-		        List<reviews> reviewList = reviewDao.displayMyReviews(Main.currentUser.getId()); // Assuming getId() returns user_id
+		        List<reviews> reviewList = reviewDao.displayMyReviews(Main.currentUser.getId()); 
 				reviewList.forEach(System.out::println);
 		    } catch (Exception e) {
-		        System.out.println("Error while retrieving orders: " + e.getMessage());
+		        System.out.println("Error while retrieving reviews: " + e.getMessage());
 		        e.printStackTrace();
 		    }
 		}
+     
+     static void shareReview() {
+         System.out.println("Enter user IDs to share the review with, separated by spaces:");
+         String input = scanner.nextLine();
+	       System.out.println("Enter Review Id");
+	       int review_id=scanner.nextInt();
+         List<Integer> userIds = new ArrayList<>();
+         
+         
+         try (reviewsDao reviewDao = new reviewsDaoImpl()) {
+        	 
+		       try {
+		             Arrays.stream(input.split("\\s+"))
+		                     .map(Integer::parseInt)  
+		                     .forEach(userIds::add); 
+		         } catch (NumberFormatException e) {
+		             System.out.println("Invalid input. Please enter only integer user IDs separated by spaces.");
+		             return;
+		         }
+		       reviewDao.shareReviewMain(review_id, userIds,Main.currentUser.getId());
+		    } catch (Exception e) {
+		        System.out.println("Error : " + e.getMessage());
+		        e.printStackTrace();
+		    }
+		}
+     
+     static void sharedWithMe() {
+ 			try(reviewsDao reviewDao = new reviewsDaoImpl()) {
+ 				List<reviews> list = reviewDao.sharedWithMe(Main.currentUser.getId());
+ 				list.forEach(System.out::println);
+ 			}
+ 			catch (Exception e) {
+ 				e.printStackTrace();
+ 			}		
+ 		}
 }

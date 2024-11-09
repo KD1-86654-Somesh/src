@@ -11,7 +11,7 @@ public class Main {
     static UserFunctions users = new UserFunctions();
     public static void main(String[] args) {
         while(true) {
-            System.out.println("Welcome to the E-commerce Application!");
+            System.out.println("Welcome to the  Application!");
             System.out.println("Select an option:");
             System.out.println("1. Register");
             System.out.println("2. Login");
@@ -50,6 +50,8 @@ public class Main {
             System.out.println("6. Delete Review");
             System.out.println("7. Display All Reviews");
             System.out.println("8. Display My Reviews");
+            System.out.println("9. Display reviews shared with me");
+            System.out.println("10. Share review");
 
             System.out.println("0. Exit");
 
@@ -77,13 +79,20 @@ public class Main {
                     users.deleteReview();
                     break;
                 case 7: 
-                    users.displayAllReviews();;
+                    users.displayAllReviews();
                     break;
                 case 8: 
-                    users.displayMyReviews();;
+                    users.displayMyReviews();
+                    break;
+                case 9: 
+                    users.sharedWithMe();
+                    break;
+                case 10: 
+                    users.shareReview();
                     break;
                 case 0:
-                    System.out.println("Exiting...");
+                    System.out.println("Logged Out...");
+                    currentUser=null;
                     System.exit(0);  
                     break;
                 default:

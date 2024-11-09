@@ -3,6 +3,8 @@ package daos;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,12 +19,14 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 	private PreparedStatement stmtDeleteReview;
 	private PreparedStatement stmtDisplayReview;
 	private PreparedStatement stmtDisplayMyReviews;
+	private PreparedStatement stmtShareReview;
+	private PreparedStatement stmtSharedWithMe;
 
 
 	public reviewsDaoImpl() throws Exception {
-		String sqlAddReview = "INSERT INTO reviews(id , movie_id, review ,rating ,user_id  ) VALUES(?, ?, ?,?,?)";
+		String sqlAddReview = "INSERT INTO reviews(id , movie_id, review ,rating ,user_id,modified  ) VALUES(?, ?, ?,?,?,?)";
 		stmtAddReview = con.prepareStatement(sqlAddReview);
-		String sqlEditReview = "update reviews set movie_id=?,review=?,user_id=? , rating=? where id=?";
+		String sqlEditReview = "update reviews set movie_id=?,review=?,user_id=? , rating=? ,modified=? where id=?";
 		stmtEditReview = con.prepareStatement(sqlEditReview);
 		
 		String sqlFindReview = "select * from reviews where id=?";
@@ -36,12 +40,27 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 		
 		String sqlDisplayMyReviews = "select * from reviews where user_id=?";
 		stmtDisplayMyReviews = con.prepareStatement(sqlDisplayMyReviews);
+		
+		String sqlShareReview = "INSERT INTO shares (user_id, review_id) VALUES (?, ?)";
+		stmtShareReview = con.prepareStatement(sqlShareReview);
+		
+		
+		
+		String sqlSharedWithMe = "SELECT r.*\r\n"
+				+ "		FROM shares s\r\n"
+				+ "		JOIN reviews r ON s.review_id = r.id\r\n"
+				+ "		WHERE s.user_id = ?;";
+		stmtSharedWithMe = con.prepareStatement(sqlSharedWithMe);
 	}
 	public void close() throws Exception {
 		stmtAddReview.close();
 		stmtEditReview.close();
 		stmtFindReview.close();
 		stmtDeleteReview.close();
+		stmtDisplayReview.close();
+		stmtDisplayMyReviews.close();
+		stmtShareReview.close();
+		stmtSharedWithMe.close();
 
 		super.close();
 	}
@@ -53,8 +72,9 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 		
 		stmtAddReview.setString(3, r.getReview());
 		stmtAddReview.setInt(4, r.getRating());
-
 		stmtAddReview.setInt(5, r.getUserId());
+		stmtAddReview.setTimestamp(6, r.getModified());
+
 		
 		return stmtAddReview.executeUpdate() == 1;
 
@@ -66,7 +86,9 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 	 		stmtEditReview.setInt(3, r.getUserId());
 
 	 		stmtEditReview.setInt(4, r.getRating());
-	 		stmtEditReview.setInt(5, r.getId());
+	 		stmtEditReview.setTimestamp(5, r.getModified());
+
+	 		stmtEditReview.setInt(6, r.getId());
 
 	 		return stmtEditReview.executeUpdate() == 1;
 	    }
@@ -80,8 +102,9 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 				int rating = rs.getInt("rating");
 				int user_id = rs.getInt("user_id");
 				String review_text = rs.getString("review");
-			
-				reviews r = new reviews(id, movie_id, review_text, rating, user_id);
+				Timestamp ts = Timestamp.from(Instant.now());
+
+				reviews r = new reviews(id, movie_id, review_text, rating, user_id,ts);
 				return r;
 			}
 		} // rs.close();
@@ -103,7 +126,9 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
 				int rating = rs.getInt("rating");
 				int user_id = rs.getInt("user_id");
 				String review_text = rs.getString("review");
-				reviews r = new reviews(id, movie_id, review_text, rating, user_id);
+				Timestamp ts = Timestamp.from(Instant.now());
+
+				reviews r = new reviews(id, movie_id, review_text, rating, user_id,ts);
 				list.add(r);
 			}
 		} // rs.close();
@@ -121,11 +146,59 @@ public class reviewsDaoImpl extends Dao implements reviewsDao {
  				String review_text = rs.getString("review");
  				int rating = rs.getInt("rating");
  				int user_id1 = rs.getInt("user_id");
-				reviews r = new reviews(id, movie_id, review_text, rating, user_id1);
+				Timestamp ts = Timestamp.from(Instant.now());
+
+				reviews r = new reviews(id, movie_id, review_text, rating, user_id1,ts);
  				list.add(r);
     		 }
     	 } 
     	 return list;
-
 }
+	 
+		
+	public void shareReviewMain(int reviewId, List<Integer> userIds,int reviewOwnerId) throws Exception {
+   shareReviewRecursive(reviewId, userIds, 0,reviewOwnerId);
+}
+	
+ public void shareReviewRecursive(int reviewId, List<Integer> userIds, int index,int reviewOwnerId) throws Exception {
+	 if (index >= userIds.size()) {
+	        return; 
+	    }
+
+	    int userId = userIds.get(index);
+
+	    if (userId == reviewOwnerId) {
+	        System.out.println("Cannot share review " + reviewId + " with user " + userId + " (the review owner).");
+	    } else {
+	        stmtShareReview.setInt(1, userId);
+	        stmtShareReview.setInt(2, reviewId);
+	        stmtShareReview.executeUpdate();
+	        System.out.println("Shared review " + reviewId + " with user " + userId);
+	    }
+
+	    shareReviewRecursive(reviewId, userIds, index + 1, reviewOwnerId);
+}
+ 
+ public List<reviews> sharedWithMe(int user_id) throws Exception {
+	   
+
+     stmtSharedWithMe.setInt(1, user_id);
+
+     List<reviews> list = new ArrayList<reviews>();
+		try(ResultSet rs = stmtSharedWithMe.executeQuery()) {
+			while(rs.next()) {
+				int id = rs.getInt("id");
+
+				int movie_id = rs.getInt("movie_id");
+				int rating = rs.getInt("rating");
+				int user_id1 = rs.getInt("user_id");
+				String review_text = rs.getString("review");
+				Timestamp ts = Timestamp.from(Instant.now());
+
+				reviews r = new reviews(id, movie_id, review_text, rating, user_id1,ts);
+				list.add(r);
+			}
+		} // rs.close();
+		return list;
+	}
 }
